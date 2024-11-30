@@ -44,6 +44,9 @@ export default function Expenses() {
 
     useEffect(() => {
         dispatch(loadSearchExpensesFromDb(searchQuery));
+        if(searchQuery === "") {
+            dispatch(loadExpensesFromDb())
+        }
     }, [searchQuery]);
 
     useFocusEffect(useCallback(
@@ -113,6 +116,8 @@ export default function Expenses() {
                 }}
                 type={"add"}
                 setClientDetected={setClientDeleted}
+                searchQuery={searchQuery}
+
 
             />
         }
@@ -125,8 +130,7 @@ export default function Expenses() {
                 }}
                 type={"update"}
                 setClientDetected={setClientDeleted}
-
-
+                searchQuery={searchQuery}
             />
         }
         {

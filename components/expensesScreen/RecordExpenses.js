@@ -44,7 +44,7 @@ export default function RecordExpenses(props) {
     }
 
     const [expenseData, setExpenseData] = useState({
-        expenseDate: props.type === "add" ? new Date() : parseDate((currentExpense.date.split(",")[0])),
+        expenseDate: props.type === "add" ? new Date() : props.searchQuery === "" ? parseDate((currentExpense.date.split(",")[0])) : currentExpense.date,
         expenseAmountType: props.type === "add" ? "" : currentExpense.expense_category,
         expenseType: props.type === "add" ? "" : currentExpense.expense_sub_category,
         amount: props.type === "add" ? "" : currentExpense.amount+"",
