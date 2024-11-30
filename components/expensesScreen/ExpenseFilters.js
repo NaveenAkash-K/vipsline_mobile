@@ -46,7 +46,7 @@ export default function ExpenseFilters({ isVisible, onClose, setLoading, loading
         setLoading(true);
         dispatch(updateFilters({ fromDate, toDate, category, range, customRangeStartDate, customRangeEndDate }));
         dispatch(updateCurrentCategoryId(category === "All expenses" ? -1 : categories.find(item => item.name === category).id))
-        await dispatch(loadExpensesFromDb());
+
         if(range === "Custom range") {
             if(customRangeEndDate === "" && customRangeStartDate === "") {
                 setEndDateRangeIsValid(false);
@@ -70,6 +70,7 @@ export default function ExpenseFilters({ isVisible, onClose, setLoading, loading
                 setLoading(false);
             }
         }
+        await dispatch(loadExpensesFromDb());
         setLoading(false);
         onClose();
 
@@ -133,7 +134,7 @@ export default function ExpenseFilters({ isVisible, onClose, setLoading, loading
                     label="Clear filters"
                     buttonStyle={styles.clearButton}
                     textStyle={[textTheme.titleMedium, {color: Colors.highlight}]}
-                    onPress={() => {
+                    onPress={async () => {
                         dispatch(updateFilters({
                             fromDate: moment().format("YYYY-MM-DD"),
                             toDate: moment().format("YYYY-MM-DD"),
@@ -142,7 +143,7 @@ export default function ExpenseFilters({ isVisible, onClose, setLoading, loading
                             customRangeStartDate: "",
                             customRangeEndDate: ""
                         }));
-                        dispatch(loadExpensesFromDb());
+                        await dispatch(loadExpensesFromDb());
                     }}
                 />
                 {
