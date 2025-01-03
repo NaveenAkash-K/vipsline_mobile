@@ -1,5 +1,5 @@
 import { Modal, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import CustomTextInput from '../../ui/CustomTextInput'
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import PrimaryButton from '../../ui/PrimaryButton';
@@ -11,21 +11,31 @@ import { useDispatch, useSelector } from 'react-redux';
 import { calculateAmountForRewardPoints, updateCalculatedPrice, updateRewardAmount } from '../../store/cartSlice';
 import splitPaymentAPI from '../../util/apis/SplitPaymentAPI';
 import Colors from '../../constants/Colors';
+import Toast from '../../ui/Toast';
 
 const RewardPointModal = (props) => {
     const dispatch = useDispatch();
     const clientInfo = useSelector(state => state.clientInfo);
     const rewardValue = useSelector(state => state.cart.rewardAllocated.rewardAmount)
     const rewardPoints = useSelector(state => state.cart.rewardAllocated.rewardPoints)
+    const rewardError = useSelector(state => state.cart.rewardAllocated.rewardError)
+    
+    const toastRef = useRef(null);
 
     const rewardStatus = useSelector(state => state.cart.rewardAllocated.statusCode)
-    const ss = useSelector(state => state.cart.rewardAllocated)
-    
     const [rewardPoint, setrewardPoint] = useState(rewardPoints);
     const insets = useSafeAreaInsets();
+
+    useEffect(() => {
+        if(rewardStatus !== 200){        
+            toastRef.current.show(rewardError ?? "")
+        }
+    }, [rewardStatus])
+    
     return (
         <Modal visible={props.isVisible} onRequestClose={props.onCloseModal} animationType='slide'>
-            <View style={{ paddingTop: insets.top, height: '100%', paddingBottom: insets.bottom }}>
+            <Toast ref={toastRef} />
+            <View style={{ paddingTop: Platform.OS === 'ios' ? insets.top : 0 , height: '100%', paddingBottom: Platform.OS === 'ios' ? insets.bottom : 10 }}>
                 <View
                     style={[styles.headingAndCloseContainer]}>
                     <Text style={[TextTheme.titleMedium, styles.heading]}>Redeem Reward Points</Text>
@@ -33,9 +43,10 @@ const RewardPointModal = (props) => {
                         buttonStyle={styles.closeButton}
                         onPress={() => {
                             dispatch(updateRewardAmount(0))
-                            if(rewardValue <= 0) {
+                            // if(rewardValue <= 0 && props.rewardValue <= 0) {
+                                props.setRewardValue(0)
                                 props.setSelectedPaymentOption(null)
-                            }
+                            // }
                             props.onCloseModal()
                         }}
                     >
@@ -51,9 +62,9 @@ const RewardPointModal = (props) => {
                         labelTextStyle={styles.labelStyle}
                         placeholder='0'
                         onEndEditing={async (rp) => {
-                            if (rp.length !== 0) {
-                                await dispatch(calculateAmountForRewardPoints(clientInfo.clientId, rp, props.price))
-                            }
+                            // if (rp.length === 0) {
+                                await dispatch(calculateAmountForRewardPoints(clientInfo.clientId, rp.length === 0 ? rp.length : rp, props.price))
+                            // }
                         }
                         }
                         value={rewardPoint}
@@ -73,7 +84,9 @@ const RewardPointModal = (props) => {
                     <Text style={{ color: "#E24C0C", marginTop: -10 }}>1 Reward Points = {props.perPointValue ?? 0} INR</Text>
                     <Text style={{ marginTop: 20, marginBottom: 5 }}>Value</Text>
                     <View style={{ flexDirection: 'row', width: '100%' }}>
-                        <View style={{ width: '10%', justifyContent: 'center', borderWidth: 1, borderColor: "#D5D7DA", borderRadius: 4, backgroundColor: "#F8F8FB", borderRightColor: 'transparent' }}>
+                        <View style={{ width: '10%', justifyContent: 'center', borderWidth: 1, borderColor: "#D5D7DA", borderRadius: 4, 
+                            backgroundColor: "#F8F8FB", borderRightColor: 'transparent' }}
+                        >
                             <Text style={[TextTheme.titleMedium, { alignSelf: 'center', }]}>
                                 ₹
                             </Text>
@@ -88,18 +101,26 @@ const RewardPointModal = (props) => {
                 </ScrollView>
                 <Divider />
                 <View style={{ paddingTop: 20 }} />
-                <View style={{ flexDirection: 'row', gap: "20%", justifyContent: 'center' }}>
+                <View style={styles.actionButtonContainer}>
                     <PrimaryButton onPress={() => {
                         dispatch(updateRewardAmount(0))
                         props.setSelectedPaymentOption(null)
+                        props.setRewardValue(0)
                         props.onCloseModal()
                     }} label='Cancel' buttonStyle={{ width: "40%", backgroundColor: Colors.white, borderWidth: 1, borderColor: "#D5D7DA" }} textStyle={{ color: Colors.black }} />
                     <PrimaryButton onPress={async () => {
-                        await splitPaymentAPI({ booking_amount: props.price, paid_amount: [{ mode: "REWARDS", amount: rewardValue }, { mode: "CASH", amount: 0 }] });
-                        dispatch(updateCalculatedPrice(clientInfo.clientId))
+                        // await splitPaymentAPI({ booking_amount: props.price, paid_amount: [{ mode: "REWARDS", amount: rewardValue }, { mode: "CASH", amount: 0 }] });
+                        // if(props.rewardValue > rewardValue){
+                        //     toastRef.current.show("Error")
+                        // }
+                        // else{
+                            // props.setSplitUpState(prev => [...prev, { mode: "REWARDS" }]);
+                        // props.setRewardValue(rewardValue)    
+                        props.onRewardValueChange(rewardValue)
                         props.onCloseModal();
+                        // }
                     }} label='Redeem' buttonStyle={{ width: "40%" }}
-                        disabled={rewardStatus !== 200 && parseInt(rewardValue) <= 0}
+                        disabled={((rewardStatus !== 400 || rewardStatus !== 404) && parseInt(rewardValue) <= 0)}
                     />
                 </View>
             </View>
@@ -145,6 +166,12 @@ const styles = StyleSheet.create({
         width: '92%',
         marginLeft: "-2%",
         borderLeftColor: 'transparent',
-        borderLeftWidth: 0
+        borderLeftWidth: 0,
+        color:Colors.black
+    },
+    actionButtonContainer:{
+        flexDirection: 'row', 
+        justifyContent: 'center',
+        gap: 20
     }
 })

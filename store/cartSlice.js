@@ -36,8 +36,32 @@ const initialCartState = {
         isRewardSelected:false,
         rewardAmount:0,
         statusCode:200,
-        rewardPoints:0
+        rewardPoints:0,
+        rewardError:"",
     },
+    splitUpState:[
+        {
+            mode: "cash",
+            shown: true,
+            amount: 0,
+            name: "Cash"
+        }, {
+            mode: "card",
+            shown: true,
+            amount: 0,
+            name: "Credit / Debit Card"
+        }, {
+            mode: "digital payments",
+            shown: false,
+            amount: 0,
+            name: "Digital payment"
+        }, {
+            mode: "prepaid",
+            shown: false,
+            amount: 0,
+            name: "Prepaid"
+        }
+    ]
 };
 
 async function getBusinessId() {
@@ -132,9 +156,11 @@ export const loadCartFromDB = (clientId) => async (dispatch, getState) => {
     }
 }
 
-export const updateCalculatedPrice = (clientId, prepaid, prepaidAmount) => async (dispatch, getState) => {
-    const {cart} = getState();
-
+export const updateCalculatedPrice = (clientId, prepaid, prepaidAmount,splitUpState) => async (dispatch, getState) => {
+    const {cart,clientInfo} = getState();
+    console.log("clientId");
+    console.log(clientId);
+    
     calculateCartPriceAPI({
         additional_discounts: cart.additionalDiscounts,
         additional_services: cart.customItems.map(customItem => {
@@ -218,14 +244,17 @@ export const updateCalculatedPrice = (clientId, prepaid, prepaidAmount) => async
         wallet_amt: prepaidAmount === undefined ? 0 : prepaidAmount,
         client_membership_id: cart.clientMembershipID === undefined || null ? null : cart.clientMembershipID,
         // client_membership_id:clientMembershipID,
-        walkInUserId: cart.prepaidClientId !== "" ? cart.prepaidClientId : clientId === "" ? undefined : clientId,
+        walkInUserId: cart.prepaidClientId !== "" ? cart.prepaidClientId : clientInfo.details.id === "" ? undefined : clientInfo.details.id,
         promo_code: "",
         user_coupon: "",
         walkin: "yes",
         isRewardSelected:cart.rewardAllocated.isRewardSelected,
-        redeemed_points:parseInt(cart.rewardAllocated.rewardPoints),
+        redeemed_points:cart.rewardAllocated.rewardPoints,
         reward_amt:cart.rewardAllocated.rewardAmount ,
-        // splitPaymentMap	:[]
+        splitPaymentMap: splitUpState?.filter(state => state.shown).map(state => ({
+            mode_of_payment: state.mode.toUpperCase(),
+            amount: state.amount
+        })),
     }).then(response => {
         dispatch(setCalculatedPrice(response))
     })
@@ -263,7 +292,7 @@ export const removeItemFromCart = (itemId) => async (dispatch, getState) => {
             dispatch(removeItemFromEditedCart(itemId));
         }
         dispatch(await loadCartFromDB());
-    } catch (error) {
+    } catch (e) {
         console.error(e.response.data)
     }
 }
@@ -298,7 +327,7 @@ export const calculateAmountForRewardPoints = (clientId,rp,tp) => async (dispatc
                 }
             }
         )
-        console.log(response.data);
+        // console.log(response.data);
         
         if(response.status_code !== 404){
             dispatch(updateRewardAmount({data:response.data.data,rp:rp,status_code:response.status_code}));
@@ -307,7 +336,7 @@ export const calculateAmountForRewardPoints = (clientId,rp,tp) => async (dispatc
     catch(e){
         console.log(JSON.stringify(e.response.data,null,3));
         
-        dispatch(updateRewardAmount({data:e.response.data.data,status_code:e.response.data.status_code}));
+        dispatch(updateRewardAmount({data:e.response.data.data,status_code:e.response.data.status_code,error:e.response.data.other_message}));
         console.error("Error Occurred in calculateAmountForRewardPoints");
         console.log(e);
     }
@@ -527,7 +556,7 @@ export const cartSlice = createSlice({
             }
         },
         updateRewardAmount(state, action) {
-            const { data = [], status_code = 200,rp = 0 } = action.payload ?? {};
+            const { data = [], status_code = 200,rp = 0,error = "" } = action.payload ?? {};
             const firstItem = (data !== null && data.length > 0 && data[0] !== null) ? data[0] : {};
 
             if (data !== null && data.length > 0 && firstItem.reward_amount !== undefined) {
@@ -535,14 +564,18 @@ export const cartSlice = createSlice({
                 state.rewardAllocated.isRewardSelected = true;
                 state.rewardAllocated.rewardAmount = firstItem.reward_amount;
                 state.rewardAllocated.statusCode = status_code;
+                state.rewardAllocated.rewardError = error
             } else {
                 state.rewardAllocated.isRewardSelected = false;
                 state.rewardAllocated.rewardAmount = 0;
-                state.rewardAllocated.rewardPoints = 0; // Ensure `rewardPoints` is reset
+                state.rewardAllocated.rewardPoints = 0;
                 state.rewardAllocated.statusCode = status_code;
+                state.rewardAllocated.rewardError = error
             }
+        },
+        updateSplitUpState(state, action) {
+            state.splitUpState = action.payload;
         }
-        
         
         
     }
@@ -574,6 +607,7 @@ export const {
     clearCustomItems,
     updateAppointmentDate,
     updateRewardAmount,
+    updateSplitUpState,
 } = cartSlice.actions;
 
 export default cartSlice.reducer;

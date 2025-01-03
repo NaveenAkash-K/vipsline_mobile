@@ -79,6 +79,7 @@ const LineChartBox = (props) => {
                     yAxisThickness={0} // Set to 0 to remove any y-axis padding
                     adjustToWidth={true} // Ensures the chart fills the width
                     yAxisLabelWidth={props.page === "SalesOverTime" ? 100 : 50}
+                    // yAxisLabelWidth={50}
                     maxValue={props.max}
                     style={{width:"100%"}}
                     noOfSections={props.sections}
@@ -96,6 +97,11 @@ const LineChartBox = (props) => {
                     // yAxisLabelTextsStyle={{ marginLeft: -15 }} // Adjust as needed for label positioning
                     // yAxisOffset={-10} // Pushes the chart closer to the left border
                     // initialSpacing={3} // Starts the line from the very beginning of the chart
+                    width={1024}
+                    focusEnabled
+                    showTextOnFocus
+                    delayBeforeUnFocus={3000}
+                    focusedDataPointHeight={20}
                 />
             </View>
         </View>

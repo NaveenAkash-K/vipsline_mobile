@@ -109,6 +109,8 @@ export const shadowStyling = StyleSheet.create({
   shadowRadius: 3.84, // Blur radius (optional for cross-platform)
   borderBottomWidth: 0.5, // Helps define a stronger bottom line
   borderColor: "rgba(0,0,0,0.1)", // Subtle color to simulate the bottom shadow
+  position: 'relative',
+  zIndex: 978,
 });
 
 export const shadowStylingTop = StyleSheet.create({

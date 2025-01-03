@@ -42,7 +42,7 @@ import {useSelector} from "react-redux";
 import {formatDate} from "../Helpers";
 import * as SecureStore from 'expo-secure-store';
 
-export default async function checkoutBookingAPI(clientDetails, cartSliceState, prepaidStatus, prepaidAmount) {
+export default async function checkoutBookingAPI(clientDetails, cartSliceState, prepaidStatus, prepaidAmount, splitUpState) {
     let authToken = "";
     let businessId = "";
 
@@ -189,8 +189,12 @@ export default async function checkoutBookingAPI(clientDetails, cartSliceState, 
             walkin: "yes",
             wallet_amt: prepaidAmount === undefined ? 0 : prepaidAmount,
             isRewardSelected:cartSliceState.rewardAllocated.isRewardSelected,
-            redeemed_points:cartSliceState.rewardAllocated.rewardPoints,
-            reward_amt:cartSliceState.rewardAllocated.rewardAmount 
+            redeemed_points:parseInt(cartSliceState.rewardAllocated.rewardPoints),
+            reward_amt:cartSliceState.rewardAllocated.rewardAmount,
+            splitPaymentMap: splitUpState.filter(state => state.shown).map(state => ({
+                mode_of_payment: state.mode.toUpperCase(),
+                amount: state.amount
+            })),
         }, {
             headers: {
                 Authorization: `Bearer ${authToken}`

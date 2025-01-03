@@ -18,7 +18,11 @@ const DashboardCard = (props) => {
       <View style={styles.cardContent}>
         <View style={styles.header}>
           <Image source={props.icon} style={styles.icon} />
-          <Text style={styles.title}>{props.title}</Text>
+          {props.popoverText !== undefined ?
+            <PoppoverIconText popoverText={props.popoverText} title={props.title} popoverOffset={Platform.OS === "ios" ? 0 : -32} titleStyle={styles.title} />
+            :
+            <Text style={[styles.title]}>{props.title}</Text>
+          }
         </View>
         <Text style={[styles.count, { fontSize: getFontSize(props.value) }]}>
           {props.title === "Total Sales Value" || props.title === "Avg. Bill Value"
@@ -76,5 +80,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     color: "#101928",
+  },
+  //   calculatepriceRow: {
+  //     flexDirection: "row",
+  //     justifyContent: "space-between",
+  //     paddingVertical: 5,
+  //     paddingHorizontal: 5,
+  // },
+  title: {
+    color: "#101928",
+    opacity: 0.6,
+    fontSize: 13,
+    textAlign: "center"
   },
 });
