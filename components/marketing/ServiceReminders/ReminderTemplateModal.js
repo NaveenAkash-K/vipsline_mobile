@@ -11,6 +11,10 @@ import {DynamicBoldText} from "../DynamicBoldText";
 import {ActivityIndicator, FlatList, Modal, ScrollView, StyleSheet, Text, View} from "react-native";
 import {Ionicons, Octicons} from "@expo/vector-icons";
 import React, {useEffect, useRef, useState} from "react";
+import getListWhatsAppBusinessTemplate
+    from "../../../apis/marketingAPI/serviceRemindersAPI/getListWhatsAppBusinessTemplate";
+import getListOfWhatsAppTemplateDetailsByType
+    from "../../../apis/marketingAPI/serviceRemindersAPI/getListOfWhatsAppTemplateDetailsByType";
 
 export default function ReminderTemplateModal(props) {
     const toastRef = useRef(null);
@@ -40,7 +44,7 @@ export default function ReminderTemplateModal(props) {
                 getListOfSMSTemplatesByType((templateNames.filter((item) => item.name === template)[0].id).toString()).then((response) => {
                     const updatedList = response.data.data.map((item) => ({
                         ...item,
-                        is_assigned: false,
+                        assigned: false,
                     }))
                     setListOfSMSTemplates(updatedList);
                 })
@@ -52,35 +56,48 @@ export default function ReminderTemplateModal(props) {
 
     useEffect(() => {
         if(!props.edit) {
-            getListOfSMSTemplatesByType(
-                props.templateData.type === "campaign" ?
-                    7 : props.templateData.type === "service_reminder" ? 10 : props.templateTypeId
-            ).then((response) => {
-                setListOfSMSTemplates(response.data.data);
-            })
+            if (props.templateType === "sms") {
+                getListOfSMSTemplatesByType(
+                    props.templateData.type === "campaign" ?
+                        7 : props.templateData.type === "service_reminder" ? 10 : props.templateTypeId
+                ).then((response) => {
+                    setListOfSMSTemplates(response.data.data);
+                })
+            }
+
+
         }
         getListOfPromotionTypesAPI(props.templateData.type).then((response) => {
             setTemplateNames(response.data.data);
         })
 
+        if (props.templateType === "whatsapp") {
+            getListOfWhatsAppTemplateDetailsByType("SERVICE_REMINDER").then((response) => {
+                setListOfSMSTemplates(response.data.data);
+            })
+        }
+
+
     }, []);
 
     function renderItem({item}) {
+
+        console.log(item.assigned)
         return <View style={styles.templateCard}>
             <Text style={[textTheme.titleMedium, {textAlign: 'center'}]}>{item.template_name}</Text>
             <DynamicBoldText text={item.sample_template}/>
             <PrimaryButton
-                buttonStyle={[styles.button, (item.is_assigned ? {backgroundColor: Colors.highlight,} : null)]}
-                pressableStyle={[styles.buttonPressable, (item.is_assigned ? {flexDirection: "row", gap: 8,justifyContent: 'flex-start', paddingHorizontal: 24, paddingVertical: 6} : null)]}
+                buttonStyle={[styles.button, (item.assigned ? {backgroundColor: Colors.highlight,} : null)]}
+                pressableStyle={[styles.buttonPressable, (item.assigned ? {flexDirection: "row", gap: 8,justifyContent: 'flex-start', paddingHorizontal: 24, paddingVertical: 6} : null)]}
                 textStyle={[textTheme.bodyMedium]}
                 onPress={() => {
                     setIsLoading(true);
 
                     const updated = listOfSMSTemplates.map((template) => ({
                         ...template,
-                        is_assigned: item === template
+                        assigned: item === template
                     }))
-                    setListOfSMSTemplates(updated);
+                    // setListOfSMSTemplates(updated);
 
                     calculatePricingForSMSCampaign(item.sample_template).then((response) => {
                         const res = response.data.data[0];
@@ -91,7 +108,7 @@ export default function ReminderTemplateModal(props) {
                             selected_template: item.sample_template,
                             template_list: listOfSMSTemplates.map((template) => ({
                                 ...template,
-                                is_assigned: item === template,
+                                assigned: item === template,
                             })),
                             credit_per_sms: res.credit_per_sms,
                             sms_char_count: res.sms_character_count,
@@ -104,15 +121,15 @@ export default function ReminderTemplateModal(props) {
                 }}
             >
                 {
-                    item.is_assigned ?
+                    item.assigned ?
                         <Octicons name="check" size={24} color={Colors.white} /> :
                         <></>
                 }
-                <Text style={[textTheme.bodyMedium, {color: item.is_assigned ? Colors.white : Colors.highlight}]}>
-                    {item.is_assigned ? "Assigned" : "Assign template"}
+                <Text style={[textTheme.bodyMedium, {color: item.assigned ? Colors.white : Colors.highlight}]}>
+                    {item.assigned ? "Assigned" : "Assign template"}
                 </Text>
                 {
-                    isLoading && item.is_assigned ?
+                    isLoading && item.assigned ?
                         <ActivityIndicator size="small" color={Colors.white} /> :
                         <></>
                 }

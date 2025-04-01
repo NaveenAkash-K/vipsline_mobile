@@ -56,6 +56,9 @@ export default function ClientDetails(props) {
     const email = details.username === null || (details.username).trim().length === 0 ?
         "Not selected" :
         details.username;
+    const location = details.location === null || (details.location).trim().length === 0 ?
+        "Not selected" :
+        details.location;
     const gender =
         details.gender === "" ?
             "Not selected" :
@@ -147,6 +150,9 @@ export default function ClientDetails(props) {
 
                 <Text style={[textTheme.bodyLarge, styles.personalDetailsLabel]}>Email</Text>
                 <Text style={[textTheme.titleMedium, styles.personalDetailsValue]}>{email}</Text>
+
+                <Text style={[textTheme.bodyLarge, styles.personalDetailsLabel]}>Location</Text>
+                <Text style={[textTheme.titleMedium, styles.personalDetailsValue]}>{location}</Text>
 
                 <Text style={[textTheme.bodyLarge, styles.personalDetailsLabel]}>Alt. Phone</Text>
                 <Text style={[textTheme.titleMedium, styles.personalDetailsValue]}>{altPhone}</Text>

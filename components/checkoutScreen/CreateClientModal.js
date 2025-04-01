@@ -22,6 +22,7 @@ const CreateClientModal = (props) => {
     const [phoneNo, setPhoneNo] = useState(["+91", ""]);
     const [secondaryNo, setSecondaryNo] = useState(["+91", ""]);
     const [email, setEmail] = useState("");
+    const [location, setLocation] = useState("")
     const [gender, setGender] = useState("");
     const [clientSource, setClientSource] = useState("");
     const [gstNo, setGstNo] = useState("");
@@ -101,6 +102,7 @@ const CreateClientModal = (props) => {
                 mobile_2: secondaryNo[1],
                 pinCode: "",
                 state: "Tamilnadu",
+                location: location
             });
 
             if(response.toString() === "false") {
@@ -228,6 +230,23 @@ const CreateClientModal = (props) => {
                                 return true
                             }
                         }}
+                    />
+                    <CustomTextInput
+                        labelTextStyle={textTheme.bodyMedium}
+                        type="text"
+                        label="Location"
+                        placeholder="Enter location"
+                        value={location}
+                        onChangeText={setLocation}
+                        // validator={(text) =>  (text === null || text === undefined || text.trim() === "") ? true : !text.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/) ? "Phone number is Invalid" : true}
+                        // validator={(text) => {
+                        //     if(checkNullUndefined(text) && !text.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/) && text.trim() !== ""){
+                        //         return "Email is invalid"
+                        //     }
+                        //     else {
+                        //         return true
+                        //     }
+                        // }}
                     />
                     <CustomTextInput
                         type="dropdown"

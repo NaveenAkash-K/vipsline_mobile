@@ -47,14 +47,13 @@ const UpdateClientModal = ((props) => {
     const details = props.details;
 
 
-
-
     const [clientData, setClientData] = useState({
         firstName: details.firstName,
         lastName: "",
         phoneNo: ["+91", details.mobile_1],
         secondaryNo: ["+91", details.mobile_2],
         email: "",
+        location: details.location,
         gender: "",
         clientSource: "",
         gstNo: "",
@@ -81,6 +80,7 @@ const UpdateClientModal = ((props) => {
             phoneNo: ["+91", details.mobile_1],
             secondaryNo: ["+91", details.mobile_2],
             email: details.username,
+            location: details.location,
             gender: checkNullUndefined(details.gender) && details.gender.trim().length !== 0 ?
                 capitalizeFirstLetter(details.gender) : "",
             gstNo: details.customer_gst,
@@ -112,7 +112,7 @@ const UpdateClientModal = ((props) => {
         try {
             await updateClientAPI(clientDetails.id, {
                 address: clientData.clientAddress,
-                anniversary: clientData.isAnniversarySelected ? formatDate(clientData.anniversaryDate, "yyyy-mm-dd") : "",
+                anniversary: clientData.isAnniversarySelected ? formatDate(clientData.anniversaryDate, "yyyy-mm-dd") : null,
                 businessId: businessId,
                 city: "",
                 clientNotes: clientData.clientNotes,
@@ -131,6 +131,8 @@ const UpdateClientModal = ((props) => {
                 mobile_2: clientData.secondaryNo[1],
                 pinCode: "",
                 state: "Tamilnadu",
+                location: clientData.location,
+                wallet_status: details.wallet_status,
             });
             // dispatch(loadClientCountFromDb());
             props.updateClientToast("User updated Successfully", 2000);
@@ -238,6 +240,24 @@ const UpdateClientModal = ((props) => {
                                 return true
                             }
                         }}
+                        // onSave={(callback) => {
+                        //     emailRef.current = callback;
+                        // }}
+                    />
+                    <CustomTextInput
+                        type="text"
+                        label="Location"
+                        placeholder="Enter location"
+                        value={clientData.location}
+                        onChangeText={(value) => handleChange("location", value)}
+                        // validator={(text) => {
+                        //     if(checkNullUndefined(text) && !text.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/) && text.trim() !== ""){
+                        //         return "Email is invalid"
+                        //     }
+                        //     else {
+                        //         return true
+                        //     }
+                        // }}
                         // onSave={(callback) => {
                         //     emailRef.current = callback;
                         // }}
