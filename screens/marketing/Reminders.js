@@ -8,6 +8,7 @@ import ConfigureReminderModal from "../../components/marketing/ServiceReminders/
 import getListOfServiceRemindersAPI from "../../apis/marketingAPI/serviceRemindersAPI/getListOfServiceRemindersAPI";
 import Toast from "../../ui/Toast";
 import updateServiceReminderAPI from "../../apis/marketingAPI/serviceRemindersAPI/updateServiceReminderAPI";
+import ServiceRemaindersLandingPage from "./ServiceRemaindersLandingPage";
 
 export default function Reminders(props) {
     const [configureReminderVisibility, setConfigureReminderVisibility] = useState(false);
@@ -21,12 +22,14 @@ export default function Reminders(props) {
     function renderItem({item}) {
         const date_time = item.updated_at.split(" ");
 
+        // console.log(date_time);
+
         const date = date_time[0] +" " +  date_time[1];
         const time = date_time[2];
 
         return <ServiceRemindersCard
             date={moment(date, "DD MMM,YYYY").format("YYYY-MM-DD")}
-            time={moment(time, "HH:mm").format("HH:mm")}
+            time={moment(time, "HH:mm").format("HH:mm") + " " + date_time[3]}
             name={item.group_name}
             type={item.services[0].res_cat_id}
             count={item.serviceLength}
@@ -72,6 +75,8 @@ export default function Reminders(props) {
     }, []);
 
 
+
+
     return (
         <View style={styles.reminders}>
             <Toast ref={toastRef}/>
@@ -83,7 +88,13 @@ export default function Reminders(props) {
                         setConfigureReminderVisibility(false);
                         getListOfServiceRemindersAPI().then((response) => {
                             setListOfServiceReminders(response.data.data[0].campaign_list);
-                        });
+                            if (response.data.data[0].campaign_list.length === 0) {
+                                setIsCampaignListEmpty(true);
+                            }
+                            else {
+                                setIsCampaignListEmpty(false);
+                            }
+                        })
                         setEdit(false);
                     }}
                     toastRef={toastRef}
@@ -92,20 +103,33 @@ export default function Reminders(props) {
                 />
             }
 
+            {
+                isCampaignListEmpty ?
+                    <ServiceRemaindersLandingPage
+                        setListOfServiceReminders={setListOfServiceReminders}
+                        toastRef={toastRef}
+                        setEdit={setEdit}
+                        setIsCampaignListEmpty={setIsCampaignListEmpty}
+                    /> :
+                    <>
+                        <FlatList
+                            data={listOfServiceReminders}
+                            renderItem={renderItem}
+                            contentContainerStyle={{gap: 16}}
+                            style={{marginVertical: 16 }}
+                        />
 
-            <FlatList
-                data={listOfServiceReminders}
-                renderItem={renderItem}
-                contentContainerStyle={{gap: 16}}
-                style={{marginVertical: 16 }}
-            />
+                        <FAB
+                            color={Colors.white}
+                            style={styles.addButton}
+                            icon={"plus"}
+                            onPress={() => setConfigureReminderVisibility(true)}
+                        />
+                    </>
+            }
 
-            <FAB
-                color={Colors.white}
-                style={styles.addButton}
-                icon={"plus"}
-                onPress={() => setConfigureReminderVisibility(true)}
-            />
+
+
         </View>
     )
 }

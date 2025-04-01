@@ -19,6 +19,8 @@ import updateServiceReminderAPI from "../../../apis/marketingAPI/serviceReminder
 import BottomActionCard from "../../../ui/BottomActionCard";
 import deleteServiceReminderAPI from "../../../apis/marketingAPI/serviceRemindersAPI/deleteServiceReminderAPI";
 import ReminderTemplateModal from "./ReminderTemplateModal";
+import getListOfWhatsAppTemplateDetailsByType
+    from "../../../apis/marketingAPI/serviceRemindersAPI/getListOfWhatsAppTemplateDetailsByType";
 
 export default function ConfigureReminderModal(props) {
     const [chooseTemplateModalVisibility, setChooseTemplateModalVisibility] = useState(false);
@@ -42,6 +44,8 @@ export default function ConfigureReminderModal(props) {
         type: "service_reminder",
         variables: "",
     });
+
+
     const [automatedReminderRulesData, setAutomatedReminderRulesData] = useState({
         "Fixed Interval": [
             {
@@ -140,7 +144,26 @@ export default function ConfigureReminderModal(props) {
         });
     }, [automatedReminderRulesData, reminderInterval]);
 
+    // console.log(JSON.stringify(props.selectedReminderData, null, 2));
 
+
+
+
+    function resetTheReminderIntervalCountTemplateData() {
+        setTemplateData({
+            template_id: "",
+            template_name: "",
+            selected_template: "",
+            template_list: "",
+            credit_per_sms: 0,
+            sms_char_count: 0,
+            total_sms_credit: 0,
+            type: "service_reminder",
+            variables: "",
+        })
+        setReminderInterval("");
+        setReminderCount("");
+    }
 
 
     const updateReminderDays = (reminder_no, days) => {
@@ -328,9 +351,9 @@ export default function ConfigureReminderModal(props) {
                     variables: templateData.variables,
                     sms_character_count: templateData.sms_char_count,
                 }],
-                whatsapp_status: false,
+                whatsapp_status: props.selectedReminderData.whatsapp_status,
                 edited_rules: true,
-                sms_status: true,
+                sms_status: props.selectedReminderData.sms_status,
                 id: props.selectedReminderData.id
             }
         )
@@ -396,31 +419,74 @@ export default function ConfigureReminderModal(props) {
 
     useEffect(() => {
         if (props.edit) {
-            getListOfSMSTemplatesByType(10).then((res) => {
-                const template = res.data.data.filter((item) => item.template_id === props.selectedReminderData.templates[0].template_id);
-                const updated_list = res.data.data.map((template) => ({
-                    ...template,
-                    is_assigned: template.template_id === props.selectedReminderData.templates[0].template_id,
-                }))
+            if (notificationType === "sms") {
 
-                calculatePricingForSMSCampaign(template[0].sample_template).then((response) => {
+                getListOfSMSTemplatesByType(10).then((res) => {
+                    const template = res.data.data.filter((item) => item.template_id === props.selectedReminderData.templates[0].template_id);
+                    const updated_list = res.data.data.map((template) => ({
+                        ...template,
+                        assigned: template.template_id === props.selectedReminderData.templates[0].template_id,
+                    }))
+
+                    calculatePricingForSMSCampaign(template[0].sample_template).then((response) => {
+                        setTemplateData(
+                            {
+                                template_id: template[0].template_id,
+                                template_name: template[0].template_name,
+                                selected_template: template[0].sample_template,
+                                template_list: updated_list,
+                                credit_per_sms: response.data.data[0].credits_per_sms,
+                                sms_char_count: response.data.data[0].sms_character_count,
+                                total_sms_credit: response.data.data[0].total_sms_credit,
+                                type: "service_reminder",
+                                variables: template[0].variables,
+                            }
+                        )
+                    })
+
+
+                });
+            }
+            else {
+                getListOfWhatsAppTemplateDetailsByType("SERVICE_REMINDER").then((res) => {
+                    const template = res.data.data.filter((item) => item.template_id === props.selectedReminderData.templates[0].template_id);
+                    const updated_list = res.data.data.map((template) => ({
+                        ...template,
+                        assigned: template.template_id === props.selectedReminderData.templates[0].template_id,
+                    }));
                     setTemplateData(
                         {
-                            template_id: template[0].template_id,
-                            template_name: template[0].template_name,
-                            selected_template: template[0].sample_template,
-                            template_list: updated_list,
-                            credit_per_sms: response.data.data[0].credits_per_sms,
-                            sms_char_count: response.data.data[0].sms_character_count,
-                            total_sms_credit: response.data.data[0].total_sms_credit,
+                            template_id: props.selectedReminderData.templates[0].template_id,
+                            template_name: "whatsapp",
+                            selected_template: props.selectedReminderData.templates[0].template_message,
+                            template_list: [],
+                            credit_per_sms: props.selectedReminderData.templates[0].credits_per_sms,
+                            sms_char_count: props.selectedReminderData.templates[0].sms_character_count,
+                            total_sms_credit: 0,
                             type: "service_reminder",
-                            variables: template[0].variables,
+                            variables: props.selectedReminderData.templates[0].variables,
                         }
                     )
+
+                    // calculatePricingForSMSCampaign(template[0].sample_template).then((response) => {
+                    //     setTemplateData(
+                    //         {
+                    //             template_id: template[0].template_id,
+                    //             template_name: "whatsapp",
+                    //             selected_template: template[0].sample_template,
+                    //             template_list: updated_list,
+                    //             credit_per_sms: response.data.data[0].credits_per_sms,
+                    //             sms_char_count: response.data.data[0].sms_character_count,
+                    //             total_sms_credit: response.data.data[0].total_sms_credit,
+                    //             type: "service_reminder",
+                    //             variables: template[0].variables,
+                    //         }
+                    //     )
+                    // })
+
+
                 })
-
-
-            });
+            }
             // console.log(automatedReminderRulesData)
 
             const reminder_rules = props.selectedReminderData.reminder_rules.filter((item) => item.id !== null)
@@ -469,6 +535,7 @@ export default function ConfigureReminderModal(props) {
                 templateData={templateData}
                 setTemplateData={setTemplateData}
                 edit={edit}
+                templateType={notificationType}
             />
         }
         {
@@ -563,29 +630,49 @@ export default function ConfigureReminderModal(props) {
                     <PrimaryButton
                         pressableStyle={styles.radioButtonPressable}
                         buttonStyle={styles.radioButton}
-                        onPress={() => setNotificationType("whatsapp")}
+                        onPress={() => {
+                            if(notificationType !== "whatsapp"){
+                                resetTheReminderIntervalCountTemplateData();
+                            }
+                            setNotificationType("whatsapp")
+                        }}
                     >
                         <RadioButton
                             value={notificationType}
                             status={notificationType === "whatsapp" ? "checked" : 'unchecked'}
                             color={Colors.highlight}
                             uncheckedColor={Colors.highlight}
-                            onPress={() => setNotificationType("whatsapp")}
+                            onPress={() => {
+                                if(notificationType !== "whatsapp"){
+                                    resetTheReminderIntervalCountTemplateData();
+                                }
+                                setNotificationType("whatsapp")
+                            }}
                         />
-                        <Text>Whatsapp</Text>
+                        <Text>WhatsApp</Text>
                     </PrimaryButton>
 
                     <PrimaryButton
                         pressableStyle={styles.radioButtonPressable}
                         buttonStyle={styles.radioButton}
-                        onPress={() => setNotificationType("sms")}
+                        onPress={() => {
+                            if(notificationType !== "sms"){
+                                resetTheReminderIntervalCountTemplateData();
+                            }
+                            setNotificationType("sms")
+                        }}
                     >
                         <RadioButton
                             value={notificationType}
                             status={notificationType === "sms" ? "checked" : 'unchecked'}
                             color={Colors.highlight}
                             uncheckedColor={Colors.highlight}
-                            onPress={() => setNotificationType("sms")}
+                            onPress={() => {
+                                if(notificationType !== "sms"){
+                                    resetTheReminderIntervalCountTemplateData();
+                                }
+                                setNotificationType("sms")
+                            }}
                         />
                         <Text>SMS</Text>
                     </PrimaryButton>
@@ -617,7 +704,7 @@ export default function ConfigureReminderModal(props) {
                             />
                             <View style={{alignItems: "flex-end"}}>
                                 <Text style={[textTheme.bodyMedium, {color: Colors.grey500, paddingTop: 32, paddingHorizontal: 16, paddingBottom: 12}]}>
-                                    {`${templateData.credit_per_sms} Credit     Aa | ${templateData.sms_char_count}`}
+                                    {(notificationType === "sms" ? templateData.credit_per_sms + "  " + "Credit" : "") + "    " + "Aa" + " "  + "|" + " " + templateData.sms_char_count}
                                 </Text>
                             </View>
 
@@ -640,7 +727,9 @@ export default function ConfigureReminderModal(props) {
                                     <Image source={require("../../../assets/icons/marketingIcons/smsCampaign/data_flow_horizontal.png")} style={{width: 25, height: 25}}/>
                                     <Text style={[textTheme.bodyMedium, {color: Colors.highlight}]}>Change template</Text>
                                 </PrimaryButton>
-                                <PrimaryButton
+                                {
+                                    notificationType === "sms" &&
+                                    <PrimaryButton
                                     buttonStyle={{
                                         flex: 1,
                                         borderRadius: 0,
@@ -650,10 +739,14 @@ export default function ConfigureReminderModal(props) {
                                         flexDirection: "row",
                                         gap: 8,
                                     }}
-                                >
-                                    <Image source={require("../../../assets/icons/marketingIcons/smsCampaign/attachment.png")} style={{width: 25, height: 25}}/>
-                                    <Text style={[textTheme.bodyMedium, {color: Colors.highlight}]}>Insert variable</Text>
-                                </PrimaryButton>
+                                    >
+                                        <Image
+                                            source={require("../../../assets/icons/marketingIcons/smsCampaign/attachment.png")}
+                                            style={{width: 25, height: 25}}/>
+                                        <Text style={[textTheme.bodyMedium, {color: Colors.highlight}]}>Insert
+                                            variable</Text>
+                                    </PrimaryButton>
+                                }
 
                             </View>
 
