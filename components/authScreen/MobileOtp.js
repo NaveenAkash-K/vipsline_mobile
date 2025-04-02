@@ -34,6 +34,7 @@ export default function MobileOtp() {
     }
 
     async function findUser() {
+        console.log(BaseURL + '/user/findUser')
         let response = "something went wrong"
         try {
             response = await axios.post(BaseURL + '/user/findUser', {
@@ -49,6 +50,9 @@ export default function MobileOtp() {
     }
 
     async function sendOtp() {
+        console.log(BaseURL + "/user/sendOtp")
+                console.log(mobileNumber)
+                console.log(platform)
         setIsLoading(true);
         if (await findUser() === "user found") {
             try {

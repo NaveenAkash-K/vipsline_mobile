@@ -33,7 +33,7 @@ const Cart = (props) => {
 
     const memoizedFinalCart = useMemo(() => {
         return [...cartItems, ...customItems];
-    }, [cartItems, customItems]);
+    }, [cartItems, customItems, editedCart]);
 
 
     const openAddItemModal = () => {

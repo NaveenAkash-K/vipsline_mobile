@@ -9,31 +9,19 @@ const initialClientState = {
 };
 
 export const loadLoginUserDetailsFromDb = () => async (dispatch) => {
-    let authToken = ""
-    try {
-        // const value = await AsyncStorage.getItem('authKey');
-        const value = await SecureStore.getItemAsync('authKey');
-        if (value !== null) {
-            authToken = value;
-        }
-    } catch (e) {
-        console.log("auth token fetching error. (inside loginUserSlice loadLoginUserDetailsFromDb)" + e);
-    }
-
     let response = "";
     try {
         response = await axios.get(
             process.env.EXPO_PUBLIC_API_URI + '/user/profile',
             {
                 headers: {
-                    authorization: "Bearer " + authToken
+                    authorization: "Bearer " + await SecureStore.getItemAsync('authKey')
                 }
             }
         );
+        console.log("after api")
         dispatch(updateUserDetails(response.data.data[0]));
-
-    }
-    catch (e) {
+    } catch (e) {
         console.error(e);
     }
 };

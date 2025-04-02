@@ -123,7 +123,7 @@ const CartItem = (props) => {
             fontWeight: "500",
         },
         amountText: {
-            maxWidth: 80,
+            maxWidth: 100,
             fontWeight: "500",
             color: Colors.black,
             marginRight: 6,
@@ -263,7 +263,7 @@ const CartItem = (props) => {
                     style={[TextTheme.bodyLarge, styles.itemNameText]}>{props.data.resource_category_name === null ? props.data.name : props.data.resource_category_name}</Text>}
 
                 <View style={styles.itemDetailsContainer}>
-                    <Text style={[TextTheme.labelLarge, styles.itemQuantityText]}>1x</Text>
+                    <Text style={[TextTheme.labelLarge, styles.itemQuantityText]}>{editedData ? editedData.quantity : props.data.quantity}x</Text>
                     <View style={styles.amountContainer}>
                         <Text
                             style={Platform.OS === "ios" ? [TextTheme.bodyLarge, styles.iosCurrencySymbol] : [TextTheme.bodyLarge, styles.currencySymbol]}>₹</Text>

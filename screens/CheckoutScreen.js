@@ -70,7 +70,7 @@ const CheckoutScreen = ({ navigation, route }) => {
     }, [showDrawerIcon]);
 
     const toastRef = useRef(null);
-    useLayoutEffect(() => {
+    useEffect(() => {
         const loadData = async () => {
             if (!reload) {
                 setIsLoading(true)
@@ -91,7 +91,7 @@ const CheckoutScreen = ({ navigation, route }) => {
                     // await dispatch(loadClientsFromDb());
                     await dispatch(loadClientFiltersFromDb(10, "All"));
                     await dispatch(loadBusinessesListFromDb());
-                    await dispatch(loadLoginUserDetailsFromDb());
+                    dispatch(loadLoginUserDetailsFromDb());
                     await dispatch(loadStaffsFromDB());
                     await dispatch(loadBusinessNotificationDetails());
                     await dispatch(loadClientCountFromDb());

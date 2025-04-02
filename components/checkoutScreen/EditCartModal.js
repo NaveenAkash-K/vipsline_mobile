@@ -21,6 +21,7 @@ import calculateCartPriceAPI from "../../apis/checkoutAPIs/calculateCartPriceAPI
 import {formatDate} from "../../util/Helpers";
 import * as Haptics from "expo-haptics";
 import Toast from "../../ui/Toast";
+import editQuantityAPI from "../../apis/checkoutAPIs/editQuantityAPI";
 
 const EditCartModal = (props) => {
     const editedCart = useSelector((state) => state.cart.editedCart);
@@ -47,6 +48,7 @@ const EditCartModal = (props) => {
     const [selectedDiscountMode, setSelectedDiscountMode] = useState(initialDiscountMode);
     const [discountValue, setDiscountValue] = useState(initialDiscountValue);
     const [discountAmount, setDiscountAmount] = useState(initialDiscountAmount);
+    const [quantity, setQuantity] = useState(props.data.quantity);
     const [price, setPrice] = useState(props.data.price);
     const dispatch = useDispatch();
     const cartItems = useSelector((state) => state.cart.items);
@@ -83,8 +85,15 @@ const EditCartModal = (props) => {
         </View>
         <Divider/>
         <View style={styles.modalContent}>
-            <CustomTextInput labelTextStyle={textTheme.titleMedium} type={"number"} label={"Quantity"} value={"1"}
-                             readOnly={true}/>
+
+            <CustomTextInput labelTextStyle={textTheme.titleMedium}
+                             type={"number"}
+                             label={"Quantity"}
+                             onChangeText={async (value) => {
+                                 setQuantity(value);
+                             }}
+                             value={quantity.toString()}/>
+
             <CustomTextInput labelTextStyle={textTheme.titleMedium} type={"price"} label={"Price"}
                              value={price.toString()}
                              onChangeText={
@@ -194,24 +203,52 @@ const EditCartModal = (props) => {
                 }
                 if (price !== parseFloat(props.data.price) || discountAmount !== props.data.dicounted_amount) {
                     if (props.data.gender === "Women" || props.data.gender === "Men" || props.data.gender === "Kids" || props.data.gender === "General") {
-                        dispatch(await addItemToEditedCart({
-                            ...props.data,
-                            amount: price,
-                            total_price: price,
-                            price: price,
-                            bonus_value: 0,
-                            disc_value: discountAmount,
-                            itemId: props.data.item_id,
-                            item_id: props.data.item_id,
-                            membership_id: props.data.membership_id,
-                            res_cat_id: props.data.resource_category_id,
-                            resource_id: props.data.resource_id,
-                            type: selectedDiscountMode === "cash" ? "AMOUNT" : "PERCENT",
-                            valid_from: "",
-                            valid_till: "",
-                            wallet_amount: props.data.wallet_amount,
-                            edited: true
-                        }))
+                        if (quantity !== 1) {
+                            let res = await editQuantityAPI({
+                                cartId: props.data.item_id,
+                                quantity: parseInt(quantity),
+                                resource_category: props.data.resource_category_id
+                            })
+                            dispatch(await addItemToEditedCart({
+                                ...props.data,
+                                amount: res.data.data[0].price,
+                                total_price: res.data.data[0].price,
+                                price: res.data.data[0].price,
+                                bonus_value: 0,
+                                disc_value: discountAmount,
+                                itemId: props.data.item_id,
+                                item_id: props.data.item_id,
+                                membership_id: props.data.membership_id,
+                                res_cat_id: props.data.resource_category_id,
+                                resource_id: props.data.resource_id,
+                                type: selectedDiscountMode === "cash" ? "AMOUNT" : "PERCENT",
+                                valid_from: "",
+                                valid_till: "",
+                                wallet_amount: props.data.wallet_amount,
+                                edited: true,
+                                quantity: parseInt(quantity)
+                            }))
+                        } else {
+                            dispatch(await addItemToEditedCart({
+                                ...props.data,
+                                amount: price,
+                                total_price: price,
+                                price: price,
+                                bonus_value: 0,
+                                disc_value: discountAmount,
+                                itemId: props.data.item_id,
+                                item_id: props.data.item_id,
+                                membership_id: props.data.membership_id,
+                                res_cat_id: props.data.resource_category_id,
+                                resource_id: props.data.resource_id,
+                                type: selectedDiscountMode === "cash" ? "AMOUNT" : "PERCENT",
+                                valid_from: "",
+                                valid_till: "",
+                                wallet_amount: props.data.wallet_amount,
+                                edited: true,
+                                quantity: parseInt(quantity)
+                            }))
+                        }
                     } else if (props.data.gender === "Products") {
                         dispatch(await addItemToEditedCart({
                             ...props.data,
@@ -230,7 +267,9 @@ const EditCartModal = (props) => {
                             valid_from: "",
                             valid_till: "",
                             wallet_amount: props.data.wallet_amount,
-                            edited: true
+                            edited: true,
+                            quantity: parseInt(quantity)
+
                         }))
                     } else if (props.data.gender === "membership") {
                         const date = new Date(Date.now()).setHours(0, 0, 0, 0)
