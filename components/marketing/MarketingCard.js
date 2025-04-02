@@ -31,9 +31,11 @@ const styles = StyleSheet.create({
         paddingVertical: 0,
     },
     avatarContainer: {
-        width:'20%',
+        // width:'20%',
         justifyContent:'center',
-        alignItems: 'flex-end',
+        // alignItems: 'flex-end',
+        marginLeft: 32
+
 
     },
     avatar: {

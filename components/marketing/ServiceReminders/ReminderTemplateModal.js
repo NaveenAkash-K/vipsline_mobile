@@ -15,6 +15,7 @@ import getListWhatsAppBusinessTemplate
     from "../../../apis/marketingAPI/serviceRemindersAPI/getListWhatsAppBusinessTemplate";
 import getListOfWhatsAppTemplateDetailsByType
     from "../../../apis/marketingAPI/serviceRemindersAPI/getListOfWhatsAppTemplateDetailsByType";
+import editWhatsAppBusinessTemplate from "../../../apis/marketingAPI/serviceRemindersAPI/editWhatsAppBusinessTemplate";
 
 export default function ReminderTemplateModal(props) {
     const toastRef = useRef(null);
@@ -29,6 +30,7 @@ export default function ReminderTemplateModal(props) {
     );
     const [listOfSMSTemplates, setListOfSMSTemplates] = useState(props.type === "greetings" ? props.templateList : props.edit ?  props.templateData.template_list : []);
     const [isLoading, setIsLoading] = useState(false);
+    const [clickedTemplateId, setClickedTemplateId] = useState(0)
 
     const ListHeaderComponent = () => <CustomTextInput
         type={"dropdown"}
@@ -73,7 +75,7 @@ export default function ReminderTemplateModal(props) {
 
         if (props.templateType === "whatsapp") {
             getListOfWhatsAppTemplateDetailsByType("SERVICE_REMINDER").then((response) => {
-                setListOfSMSTemplates(response.data.data);
+                setListOfSMSTemplates(response.data.data[0]);
             })
         }
 
@@ -81,23 +83,53 @@ export default function ReminderTemplateModal(props) {
     }, []);
 
     function renderItem({item}) {
-
-        console.log(item.assigned)
         return <View style={styles.templateCard}>
             <Text style={[textTheme.titleMedium, {textAlign: 'center'}]}>{item.template_name}</Text>
-            <DynamicBoldText text={item.sample_template}/>
+            {
+                props.templateType === "whatsapp" ?
+                    <Text style={[textTheme.bodyMedium, {color: Colors.grey500, textAlign: 'center'}]}>
+                        Added on: {item.added_on}
+                    </Text> : <></>
+            }
+            <DynamicBoldText text={item.sample_template} textStyle={{marginTop: 24}}/>
             <PrimaryButton
-                buttonStyle={[styles.button, (item.assigned ? {backgroundColor: Colors.highlight,} : null)]}
-                pressableStyle={[styles.buttonPressable, (item.assigned ? {flexDirection: "row", gap: 8,justifyContent: 'flex-start', paddingHorizontal: 24, paddingVertical: 6} : null)]}
+                buttonStyle={[styles.button, (item.assigned === "true" ? {backgroundColor: Colors.highlight,} : null)]}
+                pressableStyle={[styles.buttonPressable,  {flexDirection: "row", gap: 8,justifyContent: 'flex-start', paddingHorizontal: item.assigned === "true" ? 24 : 11, paddingVertical: item.assigned === "true" ? 6 : 8}]}
                 textStyle={[textTheme.bodyMedium]}
                 onPress={() => {
+                    setClickedTemplateId(item.template_id);
                     setIsLoading(true);
 
-                    const updated = listOfSMSTemplates.map((template) => ({
-                        ...template,
-                        assigned: item === template
-                    }))
-                    // setListOfSMSTemplates(updated);
+                    if (props.templateType === "whatsapp") {
+                        editWhatsAppBusinessTemplate(item.template_id, item.business_template_id).then((response) => {
+
+                            props.setTemplateData(prev => ({
+                                ...prev,
+                                template_name: item.template_name,
+                                template_id: item.template_id,
+                                selected_template: item.sample_template,
+                                template_list: [],
+                                credit_per_sms: 0,
+                                sms_char_count: item.sms_character_count,
+                                total_sms_credit: 0,
+                                variables: ""
+                            }));
+                            setIsLoading(false);
+                            props.onClose();
+                        })
+                        return
+                    }
+
+
+                    // if (props.templateType === "sms") {
+                        const updated = listOfSMSTemplates.map((template) => ({
+                            ...template,
+                            assigned: item === template
+                        }))
+                        setListOfSMSTemplates(updated);
+
+                    // }
+
 
                     calculatePricingForSMSCampaign(item.sample_template).then((response) => {
                         const res = response.data.data[0];
@@ -121,16 +153,16 @@ export default function ReminderTemplateModal(props) {
                 }}
             >
                 {
-                    item.assigned ?
+                    item.assigned === "true" ?
                         <Octicons name="check" size={24} color={Colors.white} /> :
                         <></>
                 }
-                <Text style={[textTheme.bodyMedium, {color: item.assigned ? Colors.white : Colors.highlight}]}>
-                    {item.assigned ? "Assigned" : "Assign template"}
+                <Text style={[textTheme.bodyMedium, {color: item.assigned === "true" ? Colors.white : Colors.highlight}]}>
+                    {item.assigned === "true" ? "Assigned" : "Assign template"}
                 </Text>
                 {
-                    isLoading && item.assigned ?
-                        <ActivityIndicator size="small" color={Colors.white} /> :
+                    isLoading && item.template_id === clickedTemplateId ?
+                        <ActivityIndicator size="small" color={Colors.highlight} /> :
                         <></>
                 }
             </PrimaryButton>
@@ -210,7 +242,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingTop: 24,
         paddingBottom: 8,
-        gap: 24
+        // gap: 24
     },
     contentContainer: {
         gap: 24
@@ -220,6 +252,7 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.white,
         borderWidth: 1,
         borderColor: Colors.highlight,
+        marginTop: 24
     },
     buttonPressable: {
         paddingHorizontal: 18,

@@ -14,6 +14,7 @@ import getSMSCreditBalanceAPI from "../../apis/marketingAPI/SMSCampaignAPI/getSM
 import CreateSMSCampaignModal from "../../components/marketing/CreateSMSCampaignModal";
 import Toast from "../../ui/Toast";
 import toast from "../../ui/Toast";
+import SMSCampaignLandingPage from "./SMSCampaignLandingpage";
 
 export default function Dashboard() {
     const [analyticsCard, setAnalyticsCard] = useState([
@@ -133,54 +134,60 @@ export default function Dashboard() {
 
 
     return (
-        <View style={styles.dashboard}>
-            {
-                createCampaignVisibility &&
-                <CreateSMSCampaignModal
-                    visible={createCampaignVisibility}
-                    onClose={() => setCreateCampaignVisibility(false)}
-                    onSave={() => {
-                        fetchData();
-                        setCreateCampaignVisibility(false);
-                    }}
-                    toastRef={toastRef}
+        campaignList.length === 0 ?
+            <SMSCampaignLandingPage
+                onSave={fetchData}
+                toastRef={toastRef}
 
-                />
+            /> :
+            <View style={styles.dashboard}>
+                {
+                    createCampaignVisibility &&
+                    <CreateSMSCampaignModal
+                        visible={createCampaignVisibility}
+                        onClose={() => setCreateCampaignVisibility(false)}
+                        onSave={() => {
+                            fetchData();
+                            setCreateCampaignVisibility(false);
+                        }}
+                        toastRef={toastRef}
 
-            }
-            <Toast ref={toastRef}/>
-                <InfiniteScrollerList
-                    scrollEventThrottle={100}
-                    style={{marginBottom: 32}}
-                    onFetchTrigger={() => {
-                        setIsLoading(true);
-                        getListOfCampaignAPI(pageNo + 1, 10).then((response) => {
-                            setCampaignList([...campaignList, ...response.data.data[0].campaign_list]);
-                            setTotalCount(response.data.data[0].total_count);
-                            setAnalyticsCard(prev =>
-                                prev.map((item, index) =>
-                                    index === 0 ? {...item, count: response.data.data[0].no_of_campaigns} : item
-                            ))
-                        });
-                        setPageNo(pageNo + 1);
-                        setIsLoading(false);
-                    }}
-                    fallbackTextOnEmptyData={"No data"}
-                    triggerThreshold={100}
-                    totalLength={totalCount}
-                    data={campaignList}
-                    isLoading={isLoading}
-                    endOfListMessage={""}
-                    fallbackTextContainerStyle={{height: 500}}
-                    fallbackTextStyle={{color: "black", ...textTheme.titleMedium}}
-                    renderItem={renderItem}
-                    scrollEnabled
-                    contentContainerStyle={{gap: 16}}
-                    ListHeaderComponent={() => listHeaderComponent()}
-                    // customLoader={() => <ActivityIndicator color={"black"} size={20} />}
+                    />
 
-                />
-        </View>
+                }
+                <Toast ref={toastRef}/>
+                    <InfiniteScrollerList
+                        scrollEventThrottle={100}
+                        style={{marginBottom: 32}}
+                        onFetchTrigger={() => {
+                            setIsLoading(true);
+                            getListOfCampaignAPI(pageNo + 1, 10).then((response) => {
+                                setCampaignList([...campaignList, ...response.data.data[0].campaign_list]);
+                                setTotalCount(response.data.data[0].total_count);
+                                setAnalyticsCard(prev =>
+                                    prev.map((item, index) =>
+                                        index === 0 ? {...item, count: response.data.data[0].no_of_campaigns} : item
+                                ))
+                            });
+                            setPageNo(pageNo + 1);
+                            setIsLoading(false);
+                        }}
+                        fallbackTextOnEmptyData={"No data"}
+                        triggerThreshold={100}
+                        totalLength={totalCount}
+                        data={campaignList}
+                        isLoading={isLoading}
+                        endOfListMessage={""}
+                        fallbackTextContainerStyle={{height: 500}}
+                        fallbackTextStyle={{color: "black", ...textTheme.titleMedium}}
+                        renderItem={renderItem}
+                        scrollEnabled
+                        contentContainerStyle={{gap: 16}}
+                        ListHeaderComponent={() => listHeaderComponent()}
+                        // customLoader={() => <ActivityIndicator color={"black"} size={20} />}
+
+                    />
+            </View>
     )
 }
 

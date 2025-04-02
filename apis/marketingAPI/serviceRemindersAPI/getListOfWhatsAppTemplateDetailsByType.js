@@ -3,7 +3,7 @@ import * as SecureStore from "expo-secure-store";
 
 export default async function getListOfWhatsAppTemplateDetailsByType(template_for) {
     try {
-        const response = await axios.post(`${process.env.EXPO_PUBLIC_API_URI}/messaging/getListOfWABusinessTemplateDetailsByType`, {
+        const response = await axios.post(`${process.env.EXPO_PUBLIC_API_URI}/messaging/getListOfBusinessTemplateDetailsByTemplateType`, {
             business_id: await SecureStore.getItemAsync('businessId'),
             template_for: template_for
         }, {
