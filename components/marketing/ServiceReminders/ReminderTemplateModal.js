@@ -28,59 +28,69 @@ export default function ReminderTemplateModal(props) {
                     "service_reminder" : props.greetingType.split(" ")[0]
 
     );
-    const [listOfSMSTemplates, setListOfSMSTemplates] = useState(props.type === "greetings" ? props.templateList : props.edit ?  props.templateData.template_list : []);
+    const [listOfSMSTemplates, setListOfSMSTemplates] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [clickedTemplateId, setClickedTemplateId] = useState(0)
 
-    const ListHeaderComponent = () => <CustomTextInput
-        type={"dropdown"}
-        placeholder={"Choose template"}
-        dropdownItems={templateNames.map((item) => item.name)}
-        onChangeValue={(template) => {
-            setTemplateName(template);
-
-            if(template === props.templateData.template_name) {
-                setListOfSMSTemplates(props.templateData.template_list);
-            }
-            else {
-                getListOfSMSTemplatesByType((templateNames.filter((item) => item.name === template)[0].id).toString()).then((response) => {
-                    const updatedList = response.data.data.map((item) => ({
-                        ...item,
-                        assigned: false,
-                    }))
-                    setListOfSMSTemplates(updatedList);
-                })
-            }
-        }}
-        value={templateName}
-    />
+    // const ListHeaderComponent = () => <CustomTextInput
+    //     type={"dropdown"}
+    //     placeholder={"Choose template"}
+    //     dropdownItems={templateNames.map((item) => item.name)}
+    //     onChangeValue={(template) => {
+    //         setTemplateName(template);
+    //
+    //         if(template === props.templateData.template_name) {
+    //             setListOfSMSTemplates(props.templateData.template_list);
+    //         }
+    //         else {
+    //             getListOfSMSTemplatesByType((templateNames.filter((item) => item.name === template)[0].id).toString()).then((response) => {
+    //                 console.log(response)
+    //                 const updatedList = response.data.data.map((item) => ({
+    //                     ...item,
+    //                     assigned:  false,
+    //                 }))
+    //                 setListOfSMSTemplates(updatedList);
+    //             })
+    //         }
+    //     }}
+    //     value={templateName}
+    // />
 
 
     useEffect(() => {
-        if(!props.edit) {
-            if (props.templateType === "sms") {
-                getListOfSMSTemplatesByType(
-                    props.templateData.type === "campaign" ?
-                        7 : props.templateData.type === "service_reminder" ? 10 : props.templateTypeId
-                ).then((response) => {
-                    setListOfSMSTemplates(response.data.data);
-                })
-            }
-
-
-        }
+        // if(!props.edit) {
+        //     if (props.templateType === "sms") {
+        //         getListOfSMSTemplatesByType(10).then((response) => {
+        //             setListOfSMSTemplates(response.data.data);
+        //         })
+        //     }
+        //
+        //
+        // }
         getListOfPromotionTypesAPI(props.templateData.type).then((response) => {
             setTemplateNames(response.data.data);
         })
 
         if (props.templateType === "whatsapp") {
             getListOfWhatsAppTemplateDetailsByType("SERVICE_REMINDER").then((response) => {
-                setListOfSMSTemplates(response.data.data[0]);
+                setListOfSMSTemplates(response.data.data[0].map((item) => ({
+                    ...item,
+                    assigned: (item.template_id === props.templateData.template_id).toString()
+                })));
+            })
+        }
+        else {
+            getListOfSMSTemplatesByType(10).then((response) => {
+                setListOfSMSTemplates(response.data.data.map((item) => ({
+                    ...item,
+                    assigned: (item.template_id === props.templateData.template_id).toString()
+                })));
             })
         }
 
 
     }, []);
+
 
     function renderItem({item}) {
         return <View style={styles.templateCard}>
@@ -101,7 +111,6 @@ export default function ReminderTemplateModal(props) {
                     setIsLoading(true);
 
                     if (props.templateType === "whatsapp") {
-                        editWhatsAppBusinessTemplate(item.template_id, item.business_template_id).then((response) => {
 
                             props.setTemplateData(prev => ({
                                 ...prev,
@@ -116,40 +125,38 @@ export default function ReminderTemplateModal(props) {
                             }));
                             setIsLoading(false);
                             props.onClose();
+                    }
+                    else {
+                        calculatePricingForSMSCampaign(item.sample_template).then((response) => {
+                            const res = response.data.data[0];
+                            props.setTemplateData(prev => ({
+                                ...prev,
+                                template_name: templateName,
+                                template_id: item.template_id,
+                                selected_template: item.sample_template,
+                                template_list: [],
+                                credit_per_sms: res.credit_per_sms,
+                                sms_char_count: res.sms_character_count,
+                                total_sms_credit: res.total_sms_credit,
+                                variables: item.variables
+                            }));
+                            setIsLoading(false);
+                            props.onClose();
                         })
-                        return
                     }
 
 
-                    // if (props.templateType === "sms") {
-                        const updated = listOfSMSTemplates.map((template) => ({
-                            ...template,
-                            assigned: item === template
-                        }))
-                        setListOfSMSTemplates(updated);
+                    // // if (props.templateType === "sms") {
+                    //     const updated = listOfSMSTemplates.map((template) => ({
+                    //         ...template,
+                    //         assigned: item === template
+                    //     }))
+                    //     setListOfSMSTemplates(updated);
+                    //
+                    // // }
 
-                    // }
 
 
-                    calculatePricingForSMSCampaign(item.sample_template).then((response) => {
-                        const res = response.data.data[0];
-                        props.setTemplateData(prev => ({
-                            ...prev,
-                            template_name: templateName,
-                            template_id: item.template_id,
-                            selected_template: item.sample_template,
-                            template_list: listOfSMSTemplates.map((template) => ({
-                                ...template,
-                                assigned: item === template,
-                            })),
-                            credit_per_sms: res.credit_per_sms,
-                            sms_char_count: res.sms_character_count,
-                            total_sms_credit: res.total_sms_credit,
-                            variables: item.variables
-                        }));
-                        setIsLoading(false);
-                        props.onClose();
-                    })
                 }}
             >
                 {

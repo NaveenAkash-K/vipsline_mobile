@@ -14,8 +14,6 @@ import ChooseTemplateForGreetings from "./ChooseTemplateForGreetings";
 import createGreetingsAPI from "../../../apis/marketingAPI/greetingsAPI/createGreetingsAPI";
 import {timeArray} from "../ServiceReminders/serviceReminderConstants";
 import updateGreetingsAPI from "../../../apis/marketingAPI/greetingsAPI/updateGreetingsAPI";
-import deleteBusinessClosedDatesAPI from "../../../apis/staffManagementAPIs/deleteBusinessClosedDatesAPI";
-import {loadBusinessClosedDates, loadTimeOffTypeFromDb} from "../../../store/staffSlice";
 import BottomActionCard from "../../../ui/BottomActionCard";
 import deleteGreetingsAPI from "../../../apis/marketingAPI/greetingsAPI/deleteGreetingsAPI";
 
@@ -124,6 +122,20 @@ export default function ManageGreetingsModal(props) {
         }
     }
     async function onUpdate() {
+        const greetingTypeValid = greetingTypeRef.current();
+        const customerSegmentValid = customerSegmentRef.current();
+        const messageGroupNameValid = messageGroupNameRef.current();
+        const sendMessageBeforeValid = greetingTemplateData.selected_template_ids.length !== 0 ? sendMessageBeforeRef.current() : true;
+        const greetingDeliveryTimeValid = greetingTemplateData.selected_template_ids.length !== 0 ? greetingDeliveryTimeRef.current() : true;
+
+        if (!greetingTypeValid || !customerSegmentValid || !messageGroupNameValid || !sendMessageBeforeValid || !greetingDeliveryTimeValid) {
+            return;
+        }
+
+        if(greetingTemplateData.selected_template_ids.length === 0) {
+            toastRef.current.show("Please select a template name to proceed");
+            return;
+        }
         const response = await updateGreetingsAPI(
             {
                 greetings_type: greetingType.split(" ")[0],
@@ -170,7 +182,6 @@ export default function ManageGreetingsModal(props) {
         else {
             toastRef.current.show(response.data.other_message);
         }
-
     }
 
     useEffect(() => {
@@ -247,6 +258,7 @@ export default function ManageGreetingsModal(props) {
                     setChooseTemplateModalVisibility(false);
                     // setTemplateValid(true);
                     setChangeTemplateIndex(-1);
+
                 }}
                 templateData={templateData}
                 setTemplateData={setTemplateData}
@@ -295,6 +307,33 @@ export default function ManageGreetingsModal(props) {
                     label={"Greeting type"}
                     value={greetingType}
                     onChangeValue={(text) => {
+                        if (text !== greetingType) {
+                            setTemplateData([{
+                                template_id: "",
+                                template_name: "",
+                                selected_template: "",
+                                credit_per_sms: 0,
+                                sms_char_count: 0,
+                                total_sms_credit: 0,
+                                type: "greetings",
+                                variables: "",
+                                addMore: true,
+                                editTemplate: false,
+                                templateStringWithBoldChar: "",
+                                send_days_before: "",
+                                template: "",
+                                delivery_time: "",
+                                mode: "",
+                                templateMappingId: ""
+                            }]);
+                            setGreetingTemplateData({
+                                selected_template_ids: [],
+                                template_name: "",
+                                selected_templates: [],
+                                type: "greetings",
+                                change_template_id: "",
+                            });
+                        }
                         getListOfPromotionTypesAPI("greetings", text).then((response) => {
                             setTemplateTypeId(response.data.data.filter((item) => item.name === text.split(" ")[0])[0].id);
                         })
@@ -328,7 +367,9 @@ export default function ManageGreetingsModal(props) {
                     label={"Message Group Name"}
                     placeholder={"Enter Group name"}
                     value={groupName}
-                    onChangeText={setGroupName}
+                    onChangeText={(text) => {
+                        setGroupName(text);
+                    }}
                     maxLength={200}
                     validator={(text) => {
                         if (text === "" || text === null || text === undefined) {
@@ -433,11 +474,20 @@ export default function ManageGreetingsModal(props) {
                                                             selected_template_ids: updated
                                                         }))
                                                     }
-                                                    setTemplateData(prevState =>
-                                                        prevState.map((item, i) =>
-                                                            i === index ? { ...item, mode: "remove" } : item
-                                                        )
-                                                    );
+                                                    // console.log(props.selectedGreetingsData.templates.map((item) => item.template_id));
+
+                                                    if (props.edit && props.selectedGreetingsData.templates.map((item) => item.template_id).includes(item.template_id)) {
+                                                        setTemplateData(prevState =>
+                                                            prevState.map((item, i) =>
+                                                                i === index ? { ...item, mode: "remove" } : item
+                                                            )
+                                                        );
+                                                    }
+                                                    else {
+                                                        setTemplateData(prevState =>
+                                                            prevState.filter((item, i) => i !== index)
+                                                        );
+                                                    }
                                                 }}
                                                 buttonStyle={{
                                                     backgroundColor: Colors.grey150,
@@ -454,7 +504,7 @@ export default function ManageGreetingsModal(props) {
                                         </View>
 
                                     </View>
-                                    <View style={{flexDirection: "row", gap: 16}}>
+                                    <View>
                                         <CustomTextInput
                                             type={"dropdown"}
                                             label={"Send this message before"}
@@ -467,7 +517,9 @@ export default function ManageGreetingsModal(props) {
                                                     )
                                                 );
 
-
+                                                setTimeout(() => {
+                                                    sendMessageBeforeRef.current();
+                                                }, 100)
                                             }}
                                             flex
                                             placeholder={"select day"}
@@ -483,7 +535,11 @@ export default function ManageGreetingsModal(props) {
                                                 if (text === "" || text === null || text === undefined) {
                                                     return "send message before is required";
                                                 }
+                                                else if(templateData.filter((item) => item.mode !== "remove").map((item) => item.send_days_before).reduce((acc, el) => ((acc[el] = (acc[el] || 0) + 1), acc), {})[text] > 1) {
+                                                    return "Please select another day from the options, as it already exists";
+                                                }
                                                 else return true;
+
                                             }}
                                             onSave={(callback) => sendMessageBeforeRef.current = callback}
                                         />
@@ -499,7 +555,7 @@ export default function ManageGreetingsModal(props) {
                                                 );
                                             }}
                                             flex
-                                            placeholder={"select time"}
+                                            placeholder={"select delivery time"}
                                             dropdownItems={timeArray}
                                             value={item.delivery_time}
                                             validator={(text) => {

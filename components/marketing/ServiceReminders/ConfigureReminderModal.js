@@ -114,7 +114,9 @@ export default function ConfigureReminderModal(props) {
 
 
         ],
-    });
+    }
+
+    );
 
 
 
@@ -163,6 +165,76 @@ export default function ConfigureReminderModal(props) {
         })
         setReminderInterval("");
         setReminderCount("");
+        setAutomatedReminderRulesData({
+            "Fixed Interval": [
+                {
+                    name: "First Reminder",
+                    first_line: "Send first reminder from the date of the last service taken.",
+                    reminder_no: 1,
+                    days: 0,
+                    id: null,
+                    edited: false,
+                },
+                {
+                    name: "Subsequent Reminders",
+                    first_line: "Specify the interval at which subsequent reminders will be sent after the first reminder.",
+                    reminder_no: 2,
+                    days: 0,
+                    id: null,
+                    edited: false,
+                }
+            ],
+            "Custom Interval": [
+                {
+                    name: "First Reminder",
+                    first_line: "Send first reminder from the date of the last service taken.",
+                    reminder_no: 1,
+                    days: 0,
+                    id: null,
+                    edited: false,
+
+                },
+                {
+                    name: "Second Reminder",
+                    first_line: "Send second reminder from the date of the last service taken.",
+                    reminder_no: 2,
+                    days: 0,
+                    id: null,
+                    edited: false,
+
+                },
+                {
+                    name: "Third Reminder",
+                    first_line: "Send third reminder from the date of the last service taken.",
+                    reminder_no: 3,
+                    days: 0,
+                    id: null,
+                    edited: false,
+
+                },
+                {
+                    name: "Fourth Reminder",
+                    first_line: "Send fourth reminder from the date of the last service taken.",
+                    reminder_no: 4,
+                    days: 0,
+                    id: null,
+                    edited: false,
+
+                },
+                {
+                    name: "Fifth Reminder",
+                    first_line: "Send fifth reminder from the date of the last service taken.",
+                    reminder_no: 5,
+                    days: 0,
+                    id: null,
+                    edited: false,
+
+                },
+
+
+            ],
+        });
+        setReminderDeliveryTime("");
     }
 
 
@@ -235,18 +307,17 @@ export default function ConfigureReminderModal(props) {
         const selectServicesValid = selectServicesRef.current();
         const reminderIntervalValid = reminderIntervalRef.current();
         const reminderCountValid = reminderCountRef.current();
-        const reminderDeliveryTimeValid = templateData.selected_template === "" ? true : reminderDeliveryTimeRef.current();
+        const reminderDeliveryTimeValid = reminderCountValid && reminderIntervalValid ? reminderDeliveryTimeRef.current() : true;
+
+        if (!ruleNameValid || !reminderIntervalValid || !reminderCountValid || !selectServicesValid || !reminderDeliveryTimeValid) {
+            return;
+        }
 
         const isAutomatedReminderRulesEmpty = (reminderInterval === "Custom Interval" ?
             automatedReminderRulesData[reminderInterval].slice(0, reminderCount) :
             reminderInterval === "Fixed Interval" && reminderCount === 1 ?
                 [automatedReminderRulesData[reminderInterval][0]] : automatedReminderRulesData[reminderInterval]).filter((item) => item.days === 0 || item.days === "").length > 0;
 
-
-
-        if (!ruleNameValid || !reminderIntervalValid || !reminderCountValid || !selectServicesValid || !reminderDeliveryTimeValid) {
-            return;
-        }
 
         if (templateData.selected_template === "") {
             toastRef.current.show("please select any template to proceed");
@@ -304,18 +375,19 @@ export default function ConfigureReminderModal(props) {
         const selectServicesValid = selectServicesRef.current();
         const reminderIntervalValid = reminderIntervalRef.current();
         const reminderCountValid = reminderCountRef.current();
-        const reminderDeliveryTimeValid = templateData.selected_template === "" ? true : reminderDeliveryTimeRef.current();
+        const reminderDeliveryTimeValid = reminderCountValid && reminderIntervalValid ? reminderDeliveryTimeRef.current() : true;
 
-        const isAutomatedReminderRulesEmpty = (reminderInterval === "Custom Interval" ?
-            automatedReminderRulesData[reminderInterval].slice(0, reminderCount) :
-            reminderInterval === "Fixed Interval" && reminderCount === 1 ?
-                [automatedReminderRulesData[reminderInterval][0]] : automatedReminderRulesData[reminderInterval]).filter((item) => item.days === 0 || item.days === "").length > 0;
 
 
 
         if (!ruleNameValid || !reminderIntervalValid || !reminderCountValid || !selectServicesValid || !reminderDeliveryTimeValid) {
             return;
         }
+
+        const isAutomatedReminderRulesEmpty = (reminderInterval === "Custom Interval" ?
+            automatedReminderRulesData[reminderInterval].slice(0, reminderCount) :
+            reminderInterval === "Fixed Interval" && reminderCount === 1 ?
+                [automatedReminderRulesData[reminderInterval][0]] : automatedReminderRulesData[reminderInterval]).filter((item) => item.days === 0 || item.days === "").length > 0;
 
         if (templateData.selected_template === "") {
             toastRef.current.show("please select any template to proceed");
@@ -416,26 +488,27 @@ export default function ConfigureReminderModal(props) {
         </View>
     }
 
+    // console.log(JSON.stringify(props.selectedReminderData, null, 2));
+
 
     useEffect(() => {
         if (props.edit) {
             if (notificationType === "sms") {
-
                 getListOfSMSTemplatesByType(10).then((res) => {
                     const template = res.data.data.filter((item) => item.template_id === props.selectedReminderData.templates[0].template_id);
-                    const updated_list = res.data.data.map((template) => ({
-                        ...template,
-                        assigned: template.template_id === props.selectedReminderData.templates[0].template_id,
-                    }))
+                    // const updated_list = res.data.data.map((template) => ({
+                    //     ...template,
+                    //     assigned: template.template_id === props.selectedReminderData.templates[0].template_id,
+                    // }))
 
-                    calculatePricingForSMSCampaign(template[0].sample_template).then((response) => {
+                    calculatePricingForSMSCampaign(props.selectedReminderData.templates[0].template_message).then((response) => {
                         setTemplateData(
                             {
-                                template_id: template[0].template_id,
+                                template_id: props.selectedReminderData.templates[0].template_id,
                                 template_name: template[0].template_name,
                                 selected_template: template[0].sample_template,
-                                template_list: updated_list,
-                                credit_per_sms: response.data.data[0].credits_per_sms,
+                                template_list: [],
+                                credit_per_sms: response.data.data[0].credit_per_sms,
                                 sms_char_count: response.data.data[0].sms_character_count,
                                 total_sms_credit: response.data.data[0].total_sms_credit,
                                 type: "service_reminder",
@@ -450,10 +523,10 @@ export default function ConfigureReminderModal(props) {
             else {
                 getListOfWhatsAppTemplateDetailsByType("SERVICE_REMINDER").then((res) => {
                     const template = res.data.data.filter((item) => item.template_id === props.selectedReminderData.templates[0].template_id);
-                    const updated_list = res.data.data.map((template) => ({
-                        ...template,
-                        assigned: template.template_id === props.selectedReminderData.templates[0].template_id,
-                    }));
+                    // const updated_list = res.data.data.map((template) => ({
+                    //     ...template,
+                    //     assigned: template.template_id === props.selectedReminderData.templates[0].template_id,
+                    // }));
                     setTemplateData(
                         {
                             template_id: props.selectedReminderData.templates[0].template_id,
@@ -511,7 +584,6 @@ export default function ConfigureReminderModal(props) {
 
         }
     }, []);
-
 
 
 
@@ -763,7 +835,7 @@ export default function ConfigureReminderModal(props) {
                     container={{marginTop: 12}}
                     validator={(text) => {
                         if (text === "" || text === null || text === undefined) {
-                            return "reminder interval i required";
+                            return "reminder interval is required";
                         }
                         else return true;
                     }}
@@ -778,7 +850,7 @@ export default function ConfigureReminderModal(props) {
                     placeholder={"Choose reminder count"}
                     validator={(text) => {
                         if (text === "" || text === null || text === undefined) {
-                            return "reminder count required";
+                            return "reminder count is required";
                         }
                         else return true;
                     }}

@@ -28,7 +28,7 @@ export default function GreetingsList(props) {
         const time = date_time[2];
 
         return <ServiceRemindersCard
-            date={moment(date, "DD MMM,YYYY").format("YYYY-MM-DD")}
+            date={moment(date, "DD MMM,YYYY").format("DD MMM,YYYY")}
             time={moment(time, "HH:mm").format("HH:mm")}
             name={item.group_name}
             type={item.greetings_type}
@@ -56,6 +56,7 @@ export default function GreetingsList(props) {
                             props.navigation.setOptions({ title: 'Greetings List' });
                         }
                         // setIsLoading(false);
+                        toastRef.current.show("SMS status changed successfully!.");
                     })
                 })
             }}
@@ -116,6 +117,7 @@ export default function GreetingsList(props) {
                                 setIsLoading(false)
 
                             })
+                            setEdit(false);
                         }}
                         edit={edit}
                         toastRef={toastRef}

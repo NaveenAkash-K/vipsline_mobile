@@ -9,6 +9,7 @@ import getListOfServiceRemindersAPI from "../../apis/marketingAPI/serviceReminde
 import Toast from "../../ui/Toast";
 import updateServiceReminderAPI from "../../apis/marketingAPI/serviceRemindersAPI/updateServiceReminderAPI";
 import ServiceRemaindersLandingPage from "./ServiceRemaindersLandingPage";
+import {capitalizeFirstLetter} from "../../util/Helpers";
 
 export default function Reminders(props) {
     const [configureReminderVisibility, setConfigureReminderVisibility] = useState(false);
@@ -28,7 +29,7 @@ export default function Reminders(props) {
         const time = date_time[2];
 
         return <ServiceRemindersCard
-            date={moment(date, "DD MMM,YYYY").format("YYYY-MM-DD")}
+            date={moment(date, "DD MMM,YYYY").format("DD MMM,YYYY")}
             time={moment(time, "HH:mm").format("HH:mm") + " " + date_time[3]}
             name={item.group_name}
             type={item.services[0].res_cat_id}
@@ -54,6 +55,7 @@ export default function Reminders(props) {
                         else {
                             setIsCampaignListEmpty(false);
                         }
+                        toastRef.current.show(`${(item.notification_type === "sms" ? "SMS" : "WhatsApp")} status changed successfully!`);
                     })
                 })
             }}

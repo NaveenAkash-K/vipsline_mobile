@@ -395,17 +395,15 @@ const CustomTextInput = (props) => {
             {content}
             {
                 props.maxLength ?
-                    <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+                    <View style={{flexDirection: error ? 'row' : "row-reverse", justifyContent: 'space-between'}}>
                         {error &&
                             <Text style={[textTheme.bodyMedium, styles.errorText, props.errorStyle]}>{errorMessage}</Text>}
-                        <Text style={[textTheme.bodyMedium, {alignSelf: 'flex-end', color: Colors.grey500}]}>{(checkNullUndefined(props.value) ?
-                            props.value.length : 0) + " / " + props.maxLength} </Text>
-
+                            <Text style={[textTheme.bodyMedium, {color: Colors.grey500}]}>{(checkNullUndefined(props.value) ?
+                                props.value.length : 0) + " / " + props.maxLength} </Text>
                     </View>
                  :
                     error && <Text style={[textTheme.bodyMedium, styles.errorText, props.errorStyle]}>{errorMessage}</Text>
             }
-
         </View>
     );
 };
